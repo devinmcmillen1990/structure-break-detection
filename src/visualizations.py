@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.interpolate import interp1d
+from mpl_toolkits.mplot3d import Axes3D
 
 
 def normalize_min_max(arr):
@@ -55,4 +56,15 @@ def overlay_shapes(list_of_shapes, title="Overlay of Shape Spectra"):
     plt.title(title)
     plt.legend()
     plt.grid(True)
+    plt.show()
+
+def plot_trajectoid(x, y, z, label="Trajectoid", color="blue"):
+    fig = plt.figure(figsize=(10, 6))
+    ax = fig.add_subplot(111, projection='3d')
+    ax.plot(x, y, z, label=label, color=color)
+    ax.set_xlabel('Time / Index')
+    ax.set_ylabel('Normalized Magnitude')
+    ax.set_zlabel('Phase or Scale')
+    ax.legend()
+    plt.title(label)
     plt.show()
