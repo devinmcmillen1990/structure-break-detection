@@ -83,3 +83,33 @@ def rounded_hull_support_mesh(points, r=0.08, ico_subdiv=3):
     rdir = h + r                                       # Minkowski add with ball radius r
     verts = dirs * rdir[:, None]
     return verts.astype(np.float32), faces
+
+def plot_meshes(meshes, title="Meshes Overlay"):
+    """
+    Overlay multiple meshes in one 3D plot.
+
+    Args:
+        meshes: list of tuples (verts, faces, color, label)
+    """
+    from mpl_toolkits.mplot3d.art3d import Poly3DCollection
+    import matplotlib.pyplot as plt
+
+    fig = plt.figure(figsize=(10, 8))
+    ax = fig.add_subplot(111, projection="3d")
+
+    for verts, faces, color, label in meshes:
+        tri = Poly3DCollection(
+            verts[faces], alpha=0.7, facecolor=color, edgecolor='k', linewidths=0.2
+        )
+        tri.set_label(label)
+        ax.add_collection3d(tri)
+
+    # autoscale based on all verts
+    all_verts = np.vstack([m[0] for m in meshes])
+    ax.auto_scale_xyz(all_verts[:,0], all_verts[:,1], all_verts[:,2])
+
+    ax.set_title(title)
+    ax.set_xlabel("X"); ax.set_ylabel("Y"); ax.set_zlabel("Z")
+    ax.legend()
+    plt.tight_layout()
+    plt.show()

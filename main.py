@@ -7,7 +7,7 @@ from src.shape_generators.discrete_wavelet_transform import (
 )
 from src.trajection import create_trajectory_from_complex, stack_points
 from src.trajectoid_bodies import (
-    star_body_from_points, rounded_hull_support_mesh, plot_mesh
+    star_body_from_points, rounded_hull_support_mesh, plot_meshes
 )
 from src.visualizations import (
     sweep_tube_around_trajectory
@@ -40,19 +40,25 @@ X_dwt, Y_dwt, Z_dwt = sweep_tube_around_trajectory(x_dwt, y_dwt, z_dwt, radius=0
 pts_dft = np.column_stack([x_dft, y_dft, z_dft]).astype(np.float32)
 pts_dwt = np.column_stack([x_dwt, y_dwt, z_dwt]).astype(np.float32)
 
-# Rollable (rounded hull) — support-sampled, no voxels:
+
+# --- Rounded hull overlay ---
 verts_rh_dft, faces_rh_dft = rounded_hull_support_mesh(pts_dft, r=0.08, ico_subdiv=3)
-plot_mesh(verts_rh_dft, faces_rh_dft, title="DFT Rounded-Convex-Hull (support-sampled)")
-
 verts_rh_dwt, faces_rh_dwt = rounded_hull_support_mesh(pts_dwt, r=0.08, ico_subdiv=3)
-plot_mesh(verts_rh_dwt, faces_rh_dwt, title="DWT Rounded-Convex-Hull (support-sampled)")
 
-# Structure-revealing star bodies (quantile radial):
+plot_meshes([
+    (verts_rh_dft, faces_rh_dft, "blue", "DFT Rounded Hull"),
+    (verts_rh_dwt, faces_rh_dwt, "orange", "DWT Rounded Hull"),
+], title="Overlay: Rounded Convex Hull Trajectoids")
+
+
+# --- Star/support overlay ---
 verts_sb_dft, faces_sb_dft = star_body_from_points(pts_dft, quantile=0.90, ico_subdiv=3)
-plot_mesh(verts_sb_dft, faces_sb_dft, title="DFT Star/Support Body (q=0.90)")
-
 verts_sb_dwt, faces_sb_dwt = star_body_from_points(pts_dwt, quantile=0.90, ico_subdiv=3)
-plot_mesh(verts_sb_dwt, faces_sb_dwt, title="DWT Star/Support Body (q=0.90)")
+
+plot_meshes([
+    (verts_sb_dft, faces_sb_dft, "blue", "DFT Star Body"),
+    (verts_sb_dwt, faces_sb_dwt, "orange", "DWT Star Body"),
+], title="Overlay: Star/Support Trajectoids")
 
 
 # import numpy as np
