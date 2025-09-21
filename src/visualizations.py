@@ -68,3 +68,77 @@ def plot_trajectoid(x, y, z, label="Trajectoid", color="blue"):
     ax.legend()
     plt.title(label)
     plt.show()
+
+def sweep_tube_around_trajectory(x, y, z, radius=0.05, num_circle_points=20):
+    """
+    Generate a tubular mesh sweeping a circle of given radius along trajectory curve.
+
+    Args:
+        x, y, z: 1D arrays representing trajectory coordinates.
+        radius: radius of circular cross section.
+        num_circle_points: number of points to define circular cross-section.
+
+    Returns:
+        X, Y, Z: 2D arrays meshgrid of swept surface points.
+    """
+    # Parameter t along curve
+    t = np.arange(len(x))
+
+    # Tangent vectors via finite differences
+    tangents = np.gradient(np.vstack([x, y, z]), axis=1).T
+    tangents /= np.linalg.norm(tangents, axis=1)[:, np.newaxis]
+
+    # Arbitrary reference vector (not parallel to tangent)
+    ref_vec = np.array([0, 0, 1])
+
+    # Compute vectors normal to curve for cross-section circle planes
+    normals = np.cross(tangents, ref_vec)
+    norm_lengths = np.linalg.norm(normals, axis=1)
+    zero_norms = norm_lengths < 1e-8
+
+    # Avoid zero length norms by switching reference if needed
+    normals[zero_norms] = np.cross(tangents[zero_norms], np.array([0,1,0]))
+    normals /= np.linalg.norm(normals, axis=1)[:, np.newaxis]
+
+    binormals = np.cross(tangents, normals)
+
+    # Circle parameter theta for cross-section points
+    theta = np.linspace(0, 2*np.pi, num_circle_points)
+
+    # Initialize mesh points
+    X = np.zeros((len(t), num_circle_points))
+    Y = np.zeros_like(X)
+    Z = np.zeros_like(X)
+
+    for i in range(len(t)):
+        # Circle in normal-binormal plane
+        circle_points = (
+            radius * (np.outer(np.cos(theta), normals[i]) + np.outer(np.sin(theta), binormals[i]))
+        )
+        # Sweep circle center along trajectory curve point
+        center = np.array([x[i], y[i], z[i]])[:, np.newaxis]  # Shape (3,1)
+        points = center + circle_points.T  # Both (3,1) + (3,20) broadcast to (3,20)
+
+        X[i, :] = points[0]
+        Y[i, :] = points[1]
+        Z[i, :] = points[2]
+
+    return X, Y, Z
+
+
+def plot_swept_surface(X, Y, Z, title="Swept Surface from Trajectory"):
+    """
+    Plot swept surface given mesh grid points.
+
+    Args:
+        X, Y, Z: 2D arrays of surface coordinates.
+    """
+    fig = plt.figure(figsize=(10, 8))
+    ax = fig.add_subplot(111, projection="3d")
+    surf = ax.plot_surface(X, Y, Z, cmap='viridis', edgecolor='k', alpha=0.8)
+
+    ax.set_xlabel("X")
+    ax.set_ylabel("Y")
+    ax.set_zlabel("Z")
+    ax.set_title(title)
+    plt.show()
