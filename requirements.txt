@@ -2,3 +2,4 @@ numpy
 scipy
 matplotlib
 PyWavelets
+scikit-image

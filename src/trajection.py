@@ -10,3 +10,6 @@ def create_trajectory_from_complex(coefficients):
     mag = np.abs(coefficients)
     phase = np.angle(coefficients)
     return create_trajectory_from_signal(mag, phase)
+
+def stack_points(x, y, z):
+    return np.column_stack([np.asarray(x), np.asarray(y), np.asarray(z)])
