@@ -1,11 +1,11 @@
 import numpy as np
 from src.shape_generators.discrete_fourier_transform import (
-    compute_dft, filter_dft_coefficients, inverse_dft
+    compute_dft, filter_dft_coefficients
 )
 from src.shape_generators.discrete_wavelet_transform import (
-    compute_multilevel_dwt, filter_dwt_coefficients, inverse_dwt
+    compute_multilevel_dwt, filter_dwt_coefficients
 )
-from src.trajection import create_trajectory_from_complex, stack_points
+from src.trajection import create_trajectory_from_complex
 from src.trajectoid_bodies import (
     star_body_from_points, rounded_hull_support_mesh, plot_meshes
 )
