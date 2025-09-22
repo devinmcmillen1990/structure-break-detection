@@ -78,23 +78,75 @@ def print_color_table(df: pd.DataFrame) -> None:
 
         print(f"{str(t):>6}  {v_str}  {p_str:>6}")
 
-def maybe_plot(df: pd.DataFrame, target_id: int) -> None:
+def maybe_plot(full_df: pd.DataFrame, target_id: int) -> None:
+    """
+    Show an interactive matplotlib figure for the provided dataframe.
+
+    The figure includes a small text box where the user can type a new id and
+    press Enter to update the plot (and print the table to stdout).
+    """
     try:
         import matplotlib.pyplot as plt
+        from matplotlib.widgets import TextBox
     except ImportError:
         print("matplotlib not installed; skipping plot. Install with: pip install matplotlib")
         return
 
-    if "time" not in df.columns or "value" not in df.columns or "period" not in df.columns:
+    # Validate required columns exist somewhere in the dataframe
+    if "time" not in full_df.columns or "value" not in full_df.columns or "period" not in full_df.columns:
         print("Cannot plot: need 'time', 'value', 'period' columns.", file=sys.stderr)
         return
 
-    # Simple scatter, color by period (0=green, 1=blue)
-    colors = df["period"].map({0: "green", 1: "blue"}).fillna("gray")
-    plt.scatter(df["time"], df["value"], c=colors)
-    plt.xlabel("time")
-    plt.ylabel("value")
-    plt.title(f"id={target_id} (green=period 0, blue=period 1)")
+    # Create figure and a textbox for entering a new id
+    fig, ax = plt.subplots(figsize=(9, 4))
+    plt.subplots_adjust(bottom=0.22)
+
+    def render_id(id_value: int) -> None:
+        try:
+            filtered = filter_by_id(full_df, id_value)
+        except KeyError as e:
+            ax.clear()
+            ax.text(0.5, 0.5, str(e), ha="center", va="center")
+            fig.canvas.draw_idle()
+            return
+
+        if filtered.empty:
+            ax.clear()
+            ax.text(0.5, 0.5, f"No rows found for id={id_value}", ha="center", va="center")
+            fig.canvas.draw_idle()
+            return
+
+        colors = filtered["period"].map({0: "green", 1: "blue"}).fillna("gray")
+        ax.clear()
+        ax.scatter(filtered["time"], filtered["value"], c=colors, s=5)
+        ax.set_xlabel("time")
+        ax.set_ylabel("value")
+        ax.set_title(f"id={id_value} — type a new id below and press Enter")
+        fig.canvas.draw_idle()
+
+        # Also print the textual table in the console for the newly selected id
+        print_color_table(filtered)
+
+    # Initial render
+    render_id(target_id)
+
+    # Text box axes (at the bottom of the figure)
+    axbox = plt.axes([0.2, 0.06, 0.6, 0.05])
+    text_box = TextBox(axbox, "id", initial=str(target_id))
+
+    def submit(text: str) -> None:
+        text = text.strip()
+        if not text:
+            return
+        try:
+            new_id = int(text)
+        except ValueError:
+            print(f"Invalid id (not an integer): '{text}'", file=sys.stderr)
+            return
+        render_id(new_id)
+
+    text_box.on_submit(submit)
+
     plt.show()
 
 def main():
@@ -114,7 +166,8 @@ def main():
     print_color_table(filtered)
 
     if args.plot:
-        maybe_plot(filtered, args.id)
+        # Pass the full dataframe so the interactive plot can select different ids
+        maybe_plot(df, args.id)
 
 if __name__ == "__main__":
     main()

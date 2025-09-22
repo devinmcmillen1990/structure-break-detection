@@ -1,0 +1,5 @@
+Testcases [10025, 10049, 10057] have clear structure break 
+
+Interesting / confusing: 10064, 10066, 10075
+
+No Break? 10072
