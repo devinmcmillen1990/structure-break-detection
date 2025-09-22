@@ -8,9 +8,8 @@ from src.shape_generators.discrete_wavelet_transform import (
     compute_multilevel_dwt, filter_dwt_coefficients, inverse_dwt
 )
 from src.visualizations import (
-    overlay_shapes, sweep_tube_around_trajectory, plot_swept_surface
+    overlay_shapes
 )
-from src.trajection import create_trajectory_from_complex
 
 # Dataset generation as before
 fs = 1000

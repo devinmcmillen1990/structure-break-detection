@@ -6,7 +6,7 @@ from src.shape_generators.discrete_wavelet_transform import (
     compute_multilevel_dwt, filter_dwt_coefficients
 )
 from src.trajection import create_trajectory_from_complex
-from src.trajectoid_bodies import (
+from src.support_meshes import (
     star_body_from_points, rounded_hull_support_mesh, plot_meshes
 )
 from src.visualizations import (
