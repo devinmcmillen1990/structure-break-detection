@@ -1,21 +1,21 @@
 # visualize.py
 import argparse
 import sys
-from typing import Optional
+# from typing import Optional
 
 import pandas as pd
 
 # Optional, helps ANSI colors work reliably on Windows terminals
-try:
-    from colorama import init as colorama_init
-    colorama_init()
-except Exception:
-    pass
+# try:
+#     from colorama import init as colorama_init
+#     colorama_init()
+# except Exception:
+#     pass
 
-# ANSI colors
-GREEN = "\033[92m"
-BLUE = "\033[94m"
-RESET = "\033[0m"
+# # ANSI colors
+# GREEN = "\033[92m"
+# BLUE = "\033[94m"
+# RESET = "\033[0m"
 
 def load_dataframe(path: str) -> pd.DataFrame:
     # Use forward slashes or raw string on Windows paths
@@ -43,40 +43,40 @@ def filter_by_id(df: pd.DataFrame, target_id: int) -> pd.DataFrame:
             )
     return df[df["id"] == target_id]
 
-def print_color_table(df: pd.DataFrame) -> None:
-    # Ensure we have time/value/period columns to display
-    missing = [c for c in ["time", "value", "period"] if c not in df.columns]
-    if missing:
-        print(f"Warning: missing expected columns: {missing}", file=sys.stderr)
+# def print_color_table(df: pd.DataFrame) -> None:
+#     # Ensure we have time/value/period columns to display
+#     missing = [c for c in ["time", "value", "period"] if c not in df.columns]
+#     if missing:
+#         print(f"Warning: missing expected columns: {missing}", file=sys.stderr)
 
-    # Sort by time if it exists
-    if "time" in df.columns:
-        df = df.sort_values("time")
+#     # Sort by time if it exists
+#     if "time" in df.columns:
+#         df = df.sort_values("time")
 
-    # Header
-    print(f"{'time':>6}  {'value':>12}  {'period':>6}")
-    print("-" * 30)
+#     # Header
+#     print(f"{'time':>6}  {'value':>12}  {'period':>6}")
+#     print("-" * 30)
 
-    for _, row in df.iterrows():
-        t = row.get("time", "")
-        v = row.get("value", "")
-        p = row.get("period", "")
+#     for _, row in df.iterrows():
+#         t = row.get("time", "")
+#         v = row.get("value", "")
+#         p = row.get("period", "")
 
-        # Color period
-        if p == 0:
-            p_str = f"{GREEN}{p}{RESET}"
-        elif p == 1:
-            p_str = f"{BLUE}{p}{RESET}"
-        else:
-            p_str = str(p)
+#         # Color period
+#         if p == 0:
+#             p_str = f"{GREEN}{p}{RESET}"
+#         elif p == 1:
+#             p_str = f"{BLUE}{p}{RESET}"
+#         else:
+#             p_str = str(p)
 
-        # Format value if numeric
-        try:
-            v_str = f"{float(v):>12.6f}"
-        except Exception:
-            v_str = f"{str(v):>12}"
+#         # Format value if numeric
+#         try:
+#             v_str = f"{float(v):>12.6f}"
+#         except Exception:
+#             v_str = f"{str(v):>12}"
 
-        print(f"{str(t):>6}  {v_str}  {p_str:>6}")
+#         print(f"{str(t):>6}  {v_str}  {p_str:>6}")
 
 def maybe_plot(full_df: pd.DataFrame, target_id: int) -> None:
     """
@@ -118,14 +118,14 @@ def maybe_plot(full_df: pd.DataFrame, target_id: int) -> None:
 
         colors = filtered["period"].map({0: "green", 1: "blue"}).fillna("gray")
         ax.clear()
-        ax.scatter(filtered["time"], filtered["value"], c=colors, s=5)
+        ax.scatter(filtered["time"], filtered["value"], c=colors, s=4)
         ax.set_xlabel("time")
         ax.set_ylabel("value")
         ax.set_title(f"id={id_value} — type a new id below and press Enter")
         fig.canvas.draw_idle()
 
         # Also print the textual table in the console for the newly selected id
-        print_color_table(filtered)
+        # print_color_table(filtered)
 
     # Initial render
     render_id(target_id)
@@ -153,7 +153,7 @@ def main():
     parser = argparse.ArgumentParser(description="Filter Parquet by id and color-code period.")
     parser.add_argument("path", help="Path to the Parquet file (e.g., ./project-data/X_test.reduced.parquet)")
     parser.add_argument("--id", type=int, required=True, help="Target id to filter (e.g., --id 10015)")
-    parser.add_argument("--plot", action="store_true", help="Show a matplotlib scatter")
+    #parser.add_argument("--plot", action="store_true", help="Show a matplotlib scatter")
     args = parser.parse_args()
 
     df = load_dataframe(args.path)
@@ -163,11 +163,11 @@ def main():
         print(f"No rows found for id={args.id}")
         return
 
-    print_color_table(filtered)
+    #print_color_table(filtered)
 
-    if args.plot:
+    #if args.plot:
         # Pass the full dataframe so the interactive plot can select different ids
-        maybe_plot(df, args.id)
+    maybe_plot(df, args.id)
 
 if __name__ == "__main__":
     main()

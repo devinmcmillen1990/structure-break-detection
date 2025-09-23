@@ -3,3 +3,14 @@ Testcases [10025, 10049, 10057] have clear structure break
 Interesting / confusing: 10064, 10066, 10075
 
 No Break? 10072
+
+// TODO
+- [ ] cleanup code
+    - [ ] remove console print out 
+    - [ ] clean up cli args / default filename ?
+- [ ] Apply functions to data
+  - [ ] reciprical 
+  - [ ] sum
+  - [ ] compare L/R? 
+- [ ] Load answer cases 
+- [ ] NN in jupyter notebook 
