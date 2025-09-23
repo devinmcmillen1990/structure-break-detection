@@ -1,87 +1,70 @@
 # visualize.py
 import argparse
 import pandas as pd
+import numpy as np
 import sys
 
 def load_dataframe(path: str) -> pd.DataFrame:
-    # Use forward slashes or raw string on Windows paths
+    """
+    Load as-is: We *expect* a MultiIndex with levels ('id','time')
+    and columns: ['value', 'period'].
+    """
     df = pd.read_parquet(path)
 
-    # If we have a MultiIndex with names that include id/time, normalize to columns
-    if isinstance(df.index, pd.MultiIndex):
-        idx_names = [n.lower() if isinstance(n, str) else n for n in df.index.names]
-        if "id" in idx_names and "time" in idx_names:
-            df = df.reset_index()  # bring id, time out of the index into columns
+    if not isinstance(df.index, pd.MultiIndex) or df.index.names != ["id", "time"]:
+        raise ValueError(
+            f"Expected MultiIndex ['id','time']; got {df.index.names} and type {type(df.index)}"
+        )
 
-    # Normalize column names for convenience
-    df.columns = [c.strip().lower() if isinstance(c, str) else c for c in df.columns]
     return df
 
 def filter_by_id(df: pd.DataFrame, target_id: int) -> pd.DataFrame:
-    if "id" not in df.columns:
-        # If id is still not a column, try to grab from index if present
-        if isinstance(df.index, pd.MultiIndex) and "id" in (df.index.names or []):
-            return df.xs(target_id, level="id").reset_index()
-        else:
-            raise KeyError(
-                "Could not find 'id' column or index level. "
-                f"Available columns: {list(df.columns)} | index names: {df.index.names}"
-            )
-    return df[df["id"] == target_id]
+    """
+    Efficient slice by the 'id' level without copying to columns.
+    Returns a *view* when possible (no reset_index), preserving the MultiIndex.
+    """
+    # .xs is very fast for MultiIndex selection:
+    # drop_level=False keeps the 'id' level; True drops it so index is just 'time'.
+    # For plotting, it's convenient to drop the 'id' level:
+    try:
+        return df.xs(target_id, level="id", drop_level=True)
+    except KeyError:
+        # No rows for that id
+        return df.iloc[0:0]  # empty frame with same columns
+
 
 def view_plot(full_df: pd.DataFrame, target_id: int) -> None:
-    """
-    Show an interactive matplotlib figure for the provided dataframe.
-
-    The figure includes a small text box where the user can type a new id and
-    press Enter to update the plot (and print the table to stdout).
-    """
-    try:
-        import matplotlib.pyplot as plt
-        from matplotlib.widgets import TextBox
-    except ImportError:
-        print("matplotlib not installed; skipping plot. Install with: pip install matplotlib")
-        return
-
-    # Validate required columns exist somewhere in the dataframe
-    if "time" not in full_df.columns or "value" not in full_df.columns or "period" not in full_df.columns:
-        print("Cannot plot: need 'time', 'value', 'period' columns.", file=sys.stderr)
-        return
-
-    # Create figure and a textbox for entering a new id
-    fig, ax = plt.subplots(figsize=(9, 4))
-    plt.subplots_adjust(bottom=0.22)
+    import matplotlib.pyplot as plt
+    from matplotlib.widgets import TextBox
 
     def render_id(id_value: int) -> None:
-        try:
-            filtered = filter_by_id(full_df, id_value)
-        except KeyError as e:
-            ax.clear()
-            ax.text(0.5, 0.5, str(e), ha="center", va="center")
-            fig.canvas.draw_idle()
-            return
+        filtered = filter_by_id(full_df, id_value)  # index now just 'time'
+        ax.clear()
 
         if filtered.empty:
-            ax.clear()
             ax.text(0.5, 0.5, f"No rows found for id={id_value}", ha="center", va="center")
             fig.canvas.draw_idle()
             print(f"No rows found for id={id_value}")
             return
 
-        colors = filtered["period"].map({0: "green", 1: "blue"}).fillna("gray")
-        ax.clear()
-        ax.scatter(filtered["time"], filtered["value"], c=colors, s=4)
+        times = filtered.index.to_numpy()                  # 'time' from index
+        values = filtered["value"].to_numpy()
+        p = filtered["period"].to_numpy()
+
+        # Assign colors based on 'period' column
+        colors = np.where(p == 0, "green", "blue")
+
+        ax.scatter(times, values, c=colors, s=4)              # change s to adjust dot size
         ax.set_xlabel("time")
         ax.set_ylabel("value")
         ax.set_title(f"id={id_value} — type a new id below and press Enter")
         fig.canvas.draw_idle()
-
         print(f"Showing data for id={id_value}")
 
-    # Initial render
+    fig, ax = plt.subplots(figsize=(9, 4))
+    plt.subplots_adjust(bottom=0.22)
     render_id(target_id)
 
-    # Text box axes (at the bottom of the figure)
     axbox = plt.axes([0.2, 0.06, 0.6, 0.05])
     text_box = TextBox(axbox, "id", initial=str(target_id))
 
@@ -97,8 +80,8 @@ def view_plot(full_df: pd.DataFrame, target_id: int) -> None:
         render_id(new_id)
 
     text_box.on_submit(submit)
-
     plt.show()
+
 
 def main():
     parser = argparse.ArgumentParser(description="Filter Parquet by id and color-code period.")
