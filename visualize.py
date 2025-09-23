@@ -23,9 +23,6 @@ def filter_by_id(df: pd.DataFrame, target_id: int) -> pd.DataFrame:
     Efficient slice by the 'id' level without copying to columns.
     Returns a *view* when possible (no reset_index), preserving the MultiIndex.
     """
-    # .xs is very fast for MultiIndex selection:
-    # drop_level=False keeps the 'id' level; True drops it so index is just 'time'.
-    # For plotting, it's convenient to drop the 'id' level:
     try:
         return df.xs(target_id, level="id", drop_level=True)
     except KeyError:
@@ -87,12 +84,10 @@ def main():
     parser = argparse.ArgumentParser(description="Filter Parquet by id and color-code period.")
     parser.add_argument("path", help="Path to the Parquet file (e.g., ./project-data/X_test.reduced.parquet)")
     parser.add_argument("--id", type=int, required=True, help="Target id to filter (e.g., --id 10015)")
-    #parser.add_argument("--plot", action="store_true", help="Show a matplotlib scatter")
     args = parser.parse_args()
 
     df = load_dataframe(args.path)
 
-    #if args.plot:
     view_plot(df, args.id)
 
 if __name__ == "__main__":
