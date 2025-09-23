@@ -1,21 +1,7 @@
 # visualize.py
 import argparse
-import sys
-# from typing import Optional
-
 import pandas as pd
-
-# Optional, helps ANSI colors work reliably on Windows terminals
-# try:
-#     from colorama import init as colorama_init
-#     colorama_init()
-# except Exception:
-#     pass
-
-# # ANSI colors
-# GREEN = "\033[92m"
-# BLUE = "\033[94m"
-# RESET = "\033[0m"
+import sys
 
 def load_dataframe(path: str) -> pd.DataFrame:
     # Use forward slashes or raw string on Windows paths
@@ -43,42 +29,7 @@ def filter_by_id(df: pd.DataFrame, target_id: int) -> pd.DataFrame:
             )
     return df[df["id"] == target_id]
 
-# def print_color_table(df: pd.DataFrame) -> None:
-#     # Ensure we have time/value/period columns to display
-#     missing = [c for c in ["time", "value", "period"] if c not in df.columns]
-#     if missing:
-#         print(f"Warning: missing expected columns: {missing}", file=sys.stderr)
-
-#     # Sort by time if it exists
-#     if "time" in df.columns:
-#         df = df.sort_values("time")
-
-#     # Header
-#     print(f"{'time':>6}  {'value':>12}  {'period':>6}")
-#     print("-" * 30)
-
-#     for _, row in df.iterrows():
-#         t = row.get("time", "")
-#         v = row.get("value", "")
-#         p = row.get("period", "")
-
-#         # Color period
-#         if p == 0:
-#             p_str = f"{GREEN}{p}{RESET}"
-#         elif p == 1:
-#             p_str = f"{BLUE}{p}{RESET}"
-#         else:
-#             p_str = str(p)
-
-#         # Format value if numeric
-#         try:
-#             v_str = f"{float(v):>12.6f}"
-#         except Exception:
-#             v_str = f"{str(v):>12}"
-
-#         print(f"{str(t):>6}  {v_str}  {p_str:>6}")
-
-def maybe_plot(full_df: pd.DataFrame, target_id: int) -> None:
+def view_plot(full_df: pd.DataFrame, target_id: int) -> None:
     """
     Show an interactive matplotlib figure for the provided dataframe.
 
@@ -114,6 +65,7 @@ def maybe_plot(full_df: pd.DataFrame, target_id: int) -> None:
             ax.clear()
             ax.text(0.5, 0.5, f"No rows found for id={id_value}", ha="center", va="center")
             fig.canvas.draw_idle()
+            print(f"No rows found for id={id_value}")
             return
 
         colors = filtered["period"].map({0: "green", 1: "blue"}).fillna("gray")
@@ -124,8 +76,7 @@ def maybe_plot(full_df: pd.DataFrame, target_id: int) -> None:
         ax.set_title(f"id={id_value} — type a new id below and press Enter")
         fig.canvas.draw_idle()
 
-        # Also print the textual table in the console for the newly selected id
-        # print_color_table(filtered)
+        print(f"Showing data for id={id_value}")
 
     # Initial render
     render_id(target_id)
@@ -157,17 +108,9 @@ def main():
     args = parser.parse_args()
 
     df = load_dataframe(args.path)
-    filtered = filter_by_id(df, args.id)
-
-    if filtered.empty:
-        print(f"No rows found for id={args.id}")
-        return
-
-    #print_color_table(filtered)
 
     #if args.plot:
-        # Pass the full dataframe so the interactive plot can select different ids
-    maybe_plot(df, args.id)
+    view_plot(df, args.id)
 
 if __name__ == "__main__":
     main()
